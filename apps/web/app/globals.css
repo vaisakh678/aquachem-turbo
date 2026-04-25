@@ -41,3 +41,60 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* Article body — minimal prose styling */
+.prose-aqua {
+  color: #27272a;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.prose-aqua > * + * {
+  margin-top: 1rem;
+}
+.prose-aqua .lede {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: #3f3f46;
+}
+.prose-aqua h2 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2.25rem;
+  margin-bottom: 0.5rem;
+  color: #18181b;
+}
+.prose-aqua h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.25rem;
+  color: #18181b;
+}
+.prose-aqua p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.prose-aqua ul,
+.prose-aqua ol {
+  padding-left: 1.5rem;
+}
+.prose-aqua ul { list-style: disc; }
+.prose-aqua ol { list-style: decimal; }
+.prose-aqua li + li { margin-top: 0.4rem; }
+.prose-aqua li::marker { color: var(--muted); }
+.prose-aqua strong { color: #18181b; font-weight: 600; }
+.prose-aqua a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
+}
+.prose-aqua a:hover {
+  text-decoration-color: var(--primary);
+}
+.prose-aqua hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
