@@ -18,8 +18,11 @@ import {
   CheckCircle2,
   Beaker,
   AlertTriangle,
+  Settings2,
 } from "lucide-react";
 import { SiteHeader } from "./_components/site-header";
+import { SettingsSheet } from "./_components/settings-sheet";
+import { usePoolSettings } from "@/lib/pool-settings";
 
 type ReadingKey = Lowercase<PropertyCode>;
 
@@ -51,20 +54,28 @@ function fmt(n: number, digits = 2): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: d });
 }
 
-function rangeHint(key: ReadingKey): string {
-  const r = DEFAULT_TARGETS[key];
-  if (!r) return "";
-  return `${r.min}–${r.max}`;
-}
-
 export default function Home() {
+  const { settings } = usePoolSettings();
   const [volume, setVolume] = useState<string>("50000");
   const [readings, setReadings] = useState<Record<ReadingKey, string>>(() => {
     const blank = {} as Record<ReadingKey, string>;
     for (const k of [...PRIMARY, ...SECONDARY, ...NICHE]) blank[k] = "";
     return blank;
   });
-  const [showNiche, setShowNiche] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const mergedTargets = useMemo(
+    () => ({ ...DEFAULT_TARGETS, ...settings.targetOverrides }),
+    [settings.targetOverrides],
+  );
+
+  const enabledPrimary   = useMemo(() => PRIMARY.filter((k)   => settings.enabled[k]), [settings.enabled]);
+  const enabledSecondary = useMemo(() => SECONDARY.filter((k) => settings.enabled[k]), [settings.enabled]);
+  const enabledNiche     = useMemo(() => NICHE.filter((k)     => settings.enabled[k]), [settings.enabled]);
+  const enabledKeys = useMemo(
+    () => [...enabledPrimary, ...enabledSecondary, ...enabledNiche],
+    [enabledPrimary, enabledSecondary, enabledNiche],
+  );
 
   const volumeL = useMemo(() => {
     const n = parseFloat(volume);
@@ -74,7 +85,7 @@ export default function Home() {
   const parsedReadings: WaterReadings | null = useMemo(() => {
     const out: Partial<Record<ReadingKey, number>> = {};
     let any = false;
-    for (const k of [...PRIMARY, ...SECONDARY, ...NICHE]) {
+    for (const k of enabledKeys) {
       const v = readings[k].trim();
       if (v === "") continue;
       const n = parseFloat(v);
@@ -85,12 +96,12 @@ export default function Home() {
     }
     if (!any) return null;
     return { ...out, testedAt: new Date() } as WaterReadings;
-  }, [readings]);
+  }, [readings, enabledKeys]);
 
   const problems: Problem[] = useMemo(() => {
     if (!parsedReadings || volumeL <= 0) return [];
-    return getAdviceBundle({ readings: parsedReadings, volumeL });
-  }, [parsedReadings, volumeL]);
+    return getAdviceBundle({ readings: parsedReadings, volumeL, targets: mergedTargets });
+  }, [parsedReadings, volumeL, mergedTargets]);
 
   const hasInput = parsedReadings !== null;
   const hasIssues = problems.length > 0;
@@ -104,7 +115,21 @@ export default function Home() {
           {/* Inputs */}
           <section className="lg:col-span-2">
             <Card>
-              <CardHeader title="Water Test" subtitle="Enter the values from your test kit" />
+              <CardHeader
+                title="Water Test"
+                subtitle="Enter the values from your test kit"
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(true)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-zinc-100 hover:text-foreground"
+                    aria-label="Customize readings"
+                    title="Customize readings"
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </button>
+                }
+              />
               <div className="px-6 py-5">
                 <Field
                   label="Pool volume"
@@ -115,53 +140,33 @@ export default function Home() {
                   emphasis
                 />
               </div>
-              <div className="border-t border-border px-6 py-5">
-                <SectionLabel>Primary</SectionLabel>
-                <div className="mt-3 grid grid-cols-1 gap-3">
-                  {PRIMARY.map((k) => (
-                    <ReadingField
-                      key={k}
-                      readingKey={k}
-                      value={readings[k]}
-                      onChange={(v) => setReadings((r) => ({ ...r, [k]: v }))}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-border px-6 py-5">
-                <SectionLabel>Secondary</SectionLabel>
-                <div className="mt-3 grid grid-cols-1 gap-3">
-                  {SECONDARY.map((k) => (
-                    <ReadingField
-                      key={k}
-                      readingKey={k}
-                      value={readings[k]}
-                      onChange={(v) => setReadings((r) => ({ ...r, [k]: v }))}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-border px-6 py-5">
-                <button
-                  type="button"
-                  onClick={() => setShowNiche((s) => !s)}
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  {showNiche ? "− Hide additional parameters" : "+ More parameters"}
-                </button>
-                {showNiche && (
-                  <div className="mt-4 grid grid-cols-1 gap-3">
-                    {NICHE.map((k) => (
-                      <ReadingField
-                        key={k}
-                        readingKey={k}
-                        value={readings[k]}
-                        onChange={(v) => setReadings((r) => ({ ...r, [k]: v }))}
-                      />
-                    ))}
+              {[
+                { title: "Primary",   keys: enabledPrimary },
+                { title: "Secondary", keys: enabledSecondary },
+                { title: "Niche",     keys: enabledNiche },
+              ]
+                .filter((g) => g.keys.length > 0)
+                .map((g) => (
+                  <div key={g.title} className="border-t border-border px-6 py-5">
+                    <SectionLabel>{g.title}</SectionLabel>
+                    <div className="mt-3 grid grid-cols-1 gap-3">
+                      {g.keys.map((k) => (
+                        <ReadingField
+                          key={k}
+                          readingKey={k}
+                          value={readings[k]}
+                          onChange={(v) => setReadings((r) => ({ ...r, [k]: v }))}
+                          targets={mergedTargets}
+                        />
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
+                ))}
+              {enabledKeys.length === 0 && (
+                <div className="border-t border-border px-6 py-5 text-center text-sm text-muted">
+                  No properties enabled. Tap the gear to choose which to track.
+                </div>
+              )}
             </Card>
           </section>
 
@@ -200,6 +205,8 @@ export default function Home() {
           Always verify with your test kit before dosing.
         </footer>
       </main>
+
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
@@ -212,11 +219,22 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+function CardHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="border-b border-border px-6 py-4">
-      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-      {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+    <div className="flex items-start justify-between gap-3 border-b border-border px-6 py-4">
+      <div>
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+      </div>
+      {action}
     </div>
   );
 }
@@ -270,13 +288,16 @@ function ReadingField({
   readingKey,
   value,
   onChange,
+  targets,
 }: {
   readingKey: ReadingKey;
   value: string;
   onChange: (v: string) => void;
+  targets: Record<string, { min: number; max: number } | undefined>;
 }) {
   const meta = PROPERTIES[PROP_BY_KEY[readingKey]];
-  const range = rangeHint(readingKey);
+  const r = targets[readingKey];
+  const range = r ? `${r.min}–${r.max}` : "";
   return (
     <Field
       label={meta.label}
