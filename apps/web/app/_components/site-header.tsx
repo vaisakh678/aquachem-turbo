@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Droplets } from "lucide-react";
 import { UnitSystemToggle } from "./unit-system-toggle";
 
-type Current = "advisor" | "learn";
+type Current = "advisor" | "learn" | "guides";
 
 export function SiteHeader({ current }: { current?: Current }) {
   return (
@@ -21,6 +21,9 @@ export function SiteHeader({ current }: { current?: Current }) {
           <nav className="flex items-center gap-1 rounded-full border border-border bg-white p-1 text-sm">
             <NavLink href="/" active={current === "advisor"}>
               Advisor
+            </NavLink>
+            <NavLink href="/guides" active={current === "guides"}>
+              Guides
             </NavLink>
             <NavLink href="/learn" active={current === "learn"}>
               Learn
