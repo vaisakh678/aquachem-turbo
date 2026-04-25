@@ -23,6 +23,12 @@ importers:
       '@repo/chemistry':
         specifier: workspace:*
         version: link:../../packages/chemistry
+      '@repo/learn':
+        specifier: workspace:*
+        version: link:../../packages/learn
+      '@repo/unitconv':
+        specifier: workspace:*
+        version: link:../../packages/unitconv
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.4)
@@ -103,6 +109,8 @@ importers:
         specifier: ^8.50.0
         version: 8.50.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.2)
 
+  packages/learn: {}
+
   packages/typescript-config: {}
 
   packages/ui:
@@ -135,6 +143,12 @@ importers:
       typescript:
         specifier: 5.9.2
         version: 5.9.2
+
+  packages/unitconv:
+    devDependencies:
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.5(@types/node@22.15.3)(vite@8.0.10(@types/node@22.15.3)(jiti@2.6.1))
 
 packages:
 

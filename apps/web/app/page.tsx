@@ -11,7 +11,6 @@ import {
   type PropertyCode,
 } from "@repo/chemistry";
 import {
-  Droplets,
   ArrowUp,
   ArrowDown,
   Hourglass,
@@ -20,6 +19,7 @@ import {
   Beaker,
   AlertTriangle,
 } from "lucide-react";
+import { SiteHeader } from "./_components/site-header";
 
 type ReadingKey = Lowercase<PropertyCode>;
 
@@ -97,22 +97,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
-              <Droplets className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-base font-semibold tracking-tight">AquaChem</div>
-              <div className="text-xs text-muted">Pool chemistry advisor</div>
-            </div>
-          </div>
-          <div className="hidden text-xs text-muted sm:block">
-            Enter readings → get precise dosing
-          </div>
-        </div>
-      </header>
+      <SiteHeader current="advisor" />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
