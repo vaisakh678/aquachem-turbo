@@ -19,10 +19,16 @@ import {
   Beaker,
   AlertTriangle,
   Settings2,
+  ExternalLink,
 } from "lucide-react";
 import { SiteHeader } from "./_components/site-header";
 import { SettingsSheet } from "./_components/settings-sheet";
 import { usePoolSettings } from "@/lib/pool-settings";
+import {
+  affiliateEnabled,
+  buyLinkForChemical,
+  buyLinkForTestKit,
+} from "@/lib/affiliate";
 
 type ReadingKey = Lowercase<PropertyCode>;
 
@@ -200,9 +206,16 @@ export default function Home() {
           </section>
         </div>
 
-        <footer className="mt-10 text-center text-xs text-muted">
-          Calculations powered by <span className="font-medium text-foreground">@repo/chemistry</span>.
-          Always verify with your test kit before dosing.
+        <footer className="mt-10 space-y-1.5 text-center text-xs text-muted">
+          <div>
+            Calculations powered by <span className="font-medium text-foreground">@repo/chemistry</span>.
+            Always verify with your test kit before dosing.
+          </div>
+          {affiliateEnabled() && (
+            <div>
+              As an Amazon Associate we earn from qualifying purchases.
+            </div>
+          )}
         </footer>
       </main>
 
@@ -310,6 +323,7 @@ function ReadingField({
 }
 
 function EmptyState() {
+  const testKitHref = buyLinkForTestKit();
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-14 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
@@ -319,6 +333,17 @@ function EmptyState() {
       <p className="mt-1 max-w-xs text-xs text-muted">
         Enter at least one water test value on the left to receive treatment guidance.
       </p>
+      {testKitHref && (
+        <a
+          href={testKitHref}
+          target="_blank"
+          rel="sponsored noopener noreferrer"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-xs font-medium text-foreground hover:bg-zinc-50 transition"
+        >
+          Don&apos;t have a test kit? Shop on Amazon
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
     </div>
   );
 }
@@ -406,21 +431,37 @@ function ProblemCard({ problem }: { problem: Problem }) {
         <div className="mt-5">
           <SectionLabel>Recommended dosing</SectionLabel>
           <ul className="mt-2 divide-y divide-border overflow-hidden rounded-lg border border-border bg-white">
-            {problem.recommendedSolutions.map((s) => (
-              <li key={s.chemical.code} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium">{s.chemical.label}</div>
-                  <div className="text-xs text-muted">
-                    {s.chemical.form === "liquid" ? "Liquid" : "Solid"} · {s.chemical.code}
+            {problem.recommendedSolutions.map((s) => {
+              const buyHref = buyLinkForChemical(s.chemical.code, s.chemical.label);
+              return (
+                <li key={s.chemical.code} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">{s.chemical.label}</div>
+                    <div className="text-xs text-muted">
+                      {s.chemical.form === "liquid" ? "Liquid" : "Solid"} · {s.chemical.code}
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold tabular-nums">
-                    {fmt(s.dosage.value)} <span className="text-muted">{s.dosage.unit}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-sm font-semibold tabular-nums">
+                        {fmt(s.dosage.value)} <span className="text-muted">{s.dosage.unit}</span>
+                      </div>
+                    </div>
+                    {buyHref && (
+                      <a
+                        href={buyHref}
+                        target="_blank"
+                        rel="sponsored noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-sky-100 transition"
+                      >
+                        Buy
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : problem.action === "DILUTE" ? (
